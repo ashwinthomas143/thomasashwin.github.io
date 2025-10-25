@@ -1,37 +1,171 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Thomas Ashwin – Deals & Tech Reviews</title>
+  <meta name="description" content="Live deals feed for Walmart, Best Buy, and more — curated by Thomas Ashwin.">
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f8f9fa; color: #222; }
-    header { background: #0078d7; color: white; padding: 2rem; text-align: center; }
-    main { max-width: 800px; margin: auto; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    h1 { color: #0078d7; }
-    .links a { margin: 0 8px; text-decoration: none; color: #0078d7; font-weight: bold; }
-    footer { text-align: center; padding: 1rem; font-size: 0.9rem; color: #555; }
+    :root { --brand:#0078d7; --bg:#f6f7fb; --card:#ffffff; --muted:#6b7280; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg); color:#111827; }
+    header { background:var(--brand); color:white; padding:2rem 1rem; text-align:center; }
+    header h1 { margin:0 0 .25rem 0; font-size:2rem; }
+    header p { margin:.25rem 0 0 0; opacity:.95; }
+    main { max-width:1100px; margin: -1.5rem auto 3rem; padding: 0 1rem; }
+    .panel { background:var(--card); border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.08); padding:1rem; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap:14px; margin-top:1rem; }
+    .card { background:white; border-radius:12px; border:1px solid #e5e7eb; padding:14px; display:flex; flex-direction:column; gap:10px; }
+    .title { font-weight:600; line-height:1.3; }
+    .meta { font-size:.9rem; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; }
+    .price { font-weight:700; }
+    .good { color:#064e3b; background:#ecfdf5; padding:.15rem .5rem; border-radius:999px; }
+    .bad { color:#7f1d1d; background:#fef2f2; padding:.15rem .5rem; border-radius:999px; }
+    .controls { display:flex; flex-wrap:wrap; gap:10px; }
+    .controls > * { border:1px solid #d1d5db; background:white; border-radius:10px; padding:.55rem .7rem; font:inherit; }
+    .controls label { display:flex; align-items:center; gap:6px; }
+    .row { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .muted { color:var(--muted); }
+    a.button { text-decoration:none; background:var(--brand); color:white; padding:.45rem .7rem; border-radius:10px; font-weight:600; }
+    footer { text-align:center; color:var(--muted); margin: 2rem 0; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Thomas Ashwin Varghese</h1>
-    <p>Helping people find the best tech deals and automation tools.</p>
+    <h1>Thomas Ashwin – Deals & Tech Reviews</h1>
+    <p>Live feed of undervalued products from Walmart, Best Buy, and more — for smart buying and profitable flips.</p>
   </header>
+
   <main>
-    <h2>About</h2>
-    <p>Welcome! I research and share the best undervalued tech products from Walmart, Best Buy, and other stores — helping you save money or flip products profitably. I also teach software testing and automation on social media.</p>
-
-    <h2>Connect</h2>
-    <div class="links">
-      <a href="mailto:ashwinthomas1@gmail.com">Email</a>
-    </div>
-
-    <h2>Affiliate Disclosure</h2>
-    <p>Some links on this site may earn affiliate commissions from partner programs such as Walmart or Best Buy. I only share genuine, valuable deals and insights.</p>
+    <section class="panel">
+      <div class="row">
+        <div class="muted">Last updated: <span id="last-updated">—</span></div>
+        <div class="controls">
+          <label>Store
+            <select id="store-filter">
+              <option value="all">All</option>
+              <option>Best Buy</option>
+              <option>Walmart</option>
+            </select>
+          </label>
+          <label>Sort by
+            <select id="sort-key">
+              <option value="profit">Profit (desc)</option>
+              <option value="margin_pct">Margin % (desc)</option>
+              <option value="buy_price_asc">Buy Price (asc)</option>
+              <option value="sell_price_asc">Est. Sell Price (asc)</option>
+              <option value="newest">Newest</option>
+            </select>
+          </label>
+          <label>Min profit $
+            <input id="min-profit" type="number" value="20" step="1" style="width:80px">
+          </label>
+          <label>Query
+            <input id="search" type="search" placeholder="Search title/UPC/SKU" style="width:180px">
+          </label>
+        </div>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div id="empty" class="muted" style="display:none; padding:1rem;">No matches. Try adjusting filters.</div>
+    </section>
+    <footer>© 2025 Thomas Ashwin Varghese — Affiliate links may earn commissions.</footer>
   </main>
-  <footer>
-    © 2025 Thomas Ashwin Varghese — All rights reserved.
-  </footer>
+
+<script>
+(async function(){
+  const fmt = new Intl.NumberFormat('en-CA', { style:'currency', currency:'CAD' });
+  const byId = (id)=>document.getElementById(id);
+  const grid = byId('grid');
+  const lastUpdated = byId('last-updated');
+  const storeFilter = byId('store-filter');
+  const sortKey = byId('sort-key');
+  const minProfit = byId('min-profit');
+  const search = byId('search');
+  const empty = byId('empty');
+
+  let deals = [];
+  try {
+    const res = await fetch('deals.json', { cache:'no-store' });
+    deals = await res.json();
+  } catch(e) {
+    deals = [];
+  }
+  if (deals && deals.length){
+    const dt = new Date(Math.max(...deals.map(d=>Date.parse(d.timestamp||0)||0)));
+    lastUpdated.textContent = isFinite(dt) ? dt.toLocaleString() : '—';
+  }
+
+  function passFilters(d){
+    const storeOk = storeFilter.value==='all' || (d.store||'').toLowerCase()===storeFilter.value.toLowerCase();
+    const profitOk = (d.profit ?? (d.est_sell_price - (d.fees||0) - (d.shipping||0) - (d.buy_price||0) - ((d.tax_rate||0)* (d.buy_price||0)))) >= (parseFloat(minProfit.value)||0);
+    const q = (search.value||'').trim().toLowerCase();
+    const str = [d.title,d.upc,d.sku,d.brand,d.category].map(x=>x||'').join(' ').toLowerCase();
+    const queryOk = !q || str.includes(q);
+    return storeOk && profitOk && queryOk;
+  }
+
+  function getProfit(d){
+    if (typeof d.profit === 'number') return d.profit;
+    const buy = +d.buy_price || 0;
+    const tax = (+d.tax_rate || 0) * buy;
+    const fees = +d.fees || 0;
+    const ship = +d.shipping || 0;
+    const sell = +d.est_sell_price || 0;
+    return sell - fees - ship - buy - tax;
+  }
+
+  function getMarginPct(d){
+    const p = getProfit(d);
+    const buy = +d.buy_price || 1;
+    return p / buy;
+  }
+
+  function sortDeals(arr){
+    switch (sortKey.value){
+      case 'profit': return arr.sort((a,b)=>getProfit(b)-getProfit(a));
+      case 'margin_pct': return arr.sort((a,b)=>getMarginPct(b)-getMarginPct(a));
+      case 'buy_price_asc': return arr.sort((a,b)=>(+a.buy_price||0)-(+b.buy_price||0));
+      case 'sell_price_asc': return arr.sort((a,b)=>(+a.est_sell_price||0)-(+b.est_sell_price||0));
+      case 'newest': return arr.sort((a,b)=>Date.parse(b.timestamp||0)-Date.parse(a.timestamp||0));
+      default: return arr;
+    }
+  }
+
+  function render(){
+    grid.innerHTML = '';
+    const filtered = sortDeals(deals.filter(passFilters));
+    empty.style.display = filtered.length ? 'none' : 'block';
+    for (const d of filtered){
+      const profit = getProfit(d);
+      const margin = getMarginPct(d);
+      const badge = profit>=0 ? `<span class="good">+${fmt.format(profit)} • ${(margin*100).toFixed(0)}%</span>`
+                              : `<span class="bad">${fmt.format(profit)} • ${(margin*100).toFixed(0)}%</span>`;
+      const link = d.link ? `<a class="button" href="${d.link}" target="_blank" rel="noopener">View</a>` : '';
+      const comp = d.comp_link ? `<a href="${d.comp_link}" target="_blank" rel="noopener">Comp</a>` : '';
+      const store = d.store || '—';
+      const img = d.image || '';
+      grid.insertAdjacentHTML('beforeend', `
+        <article class="card">
+          ${img ? `<img src="${img}" alt="" style="width:100%; height:160px; object-fit:contain; background:#f9fafb; border-radius:8px;">` : ''}
+          <div class="title">${d.title||'Untitled'}</div>
+          <div class="meta"><span>${store}</span><span>SKU: ${d.sku||'—'}</span><span>UPC: ${d.upc||'—'}</span></div>
+          <div class="meta"><span>Buy: <span class="price">${fmt.format(+d.buy_price||0)}</span></span> • 
+                               <span>Est. Sell: <strong>${fmt.format(+d.est_sell_price||0)}</strong></span></div>
+          <div class="meta"><span>Fees: ${fmt.format(+d.fees||0)}</span> • <span>Ship: ${fmt.format(+d.shipping||0)}</span> • <span>Tax: ${((+d.tax_rate||0)*100).toFixed(0)}%</span></div>
+          <div>${badge}</div>
+          <div class="row">
+            <div class="muted">${d.brand||''} ${d.category? '• '+d.category:''}</div>
+            <div style="display:flex; gap:8px;">${comp}${link}</div>
+          </div>
+        </article>
+      `);
+    }
+  }
+
+  [storeFilter, sortKey, minProfit, search].forEach(el=>el.addEventListener('input', render));
+  render();
+})();
+</script>
 </body>
 </html>

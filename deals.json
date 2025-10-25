@@ -1,0 +1,38 @@
+[
+  {
+    "store": "Best Buy",
+    "title": "Samsung 970 EVO Plus 1TB NVMe SSD",
+    "brand": "Samsung",
+    "category": "SSD",
+    "sku": "1234567",
+    "upc": "887276123456",
+    "buy_price": 79.99,
+    "est_sell_price": 119.99,
+    "fees": 16.29,
+    "shipping": 12.0,
+    "tax_rate": 0.13,
+    "profit": null,
+    "link": "https://www.bestbuy.ca/en-ca",
+    "comp_link": "https://www.ebay.ca/sch/i.html?_nkw=970+EVO+Plus+1TB",
+    "image": "https://images.samsung.com/is/image/samsung/p6pim/ca/mb-mz-v7s1t0",
+    "timestamp": "2025-10-25T23:43:14.334191Z"
+  },
+  {
+    "store": "Walmart",
+    "title": "TP-Link Archer AX55 AX3000 Wi\u2011Fi 6 Router",
+    "brand": "TP-Link",
+    "category": "Networking",
+    "sku": "AX55-CA",
+    "upc": "845973123456",
+    "buy_price": 79.0,
+    "est_sell_price": 129.0,
+    "fees": 17.07,
+    "shipping": 12.0,
+    "tax_rate": 0.13,
+    "profit": null,
+    "link": "https://www.walmart.ca",
+    "comp_link": "https://www.ebay.ca/sch/i.html?_nkw=Archer+AX55",
+    "image": "https://static.tp-link.com/upload/product/2021/202110/20211012/AX55-1.png",
+    "timestamp": "2025-10-25T23:43:14.334200Z"
+  }
+]
